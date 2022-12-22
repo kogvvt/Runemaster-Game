@@ -1,9 +1,8 @@
-
 # RuneMaster
 
-## Roguelike game that takes place within us and the realm of Gods.
+## Roguelike game that takes place between us and the realm of Gods.
 
-### Author : Krystian Kogut
+### Author : Krystian Kogut 
 
 ### Technology used : Java
 
