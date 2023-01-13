@@ -7,6 +7,7 @@ public class ActorAi {
     }
     public void onEnter(int x, int y, Tile tile){}
     public void onUpdate(){
+        //update the actor
     }
     public void onNotify(String message){
        // message.add(message);

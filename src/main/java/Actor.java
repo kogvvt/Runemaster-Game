@@ -43,7 +43,7 @@ class Actor {
     }
 
     public void moveBy(int mx, int my) {
-        Actor other = world.actorAtLocation(x+mx, y+my);
+        Actor other = world.actorAtLocation(x, y);
         if(other != null) {
             actorAi.onEnter(x + mx, y + my, world.tile(x + mx, y + my));
         }else{
@@ -54,11 +54,12 @@ class Actor {
     public void notify(String message, Object ... args){
         actorAi.onNotify(String.format(message, args));
     }
-
+/*
     public void attack(Actor actor){
-        world.removeActor(actor);
+        world.removeActor(this);
     }
-   /* public void attack(Actor actor) {
+  */
+   public void attack(Actor actor) {
         int damage = Math.max(0, getAttack() - actor.getDefense());
         damage = (int)(Math.random() * damage) + 1;
         actor.hpMod(-damage);
@@ -66,7 +67,7 @@ class Actor {
         actor.notify("'%s' dealt you %d damage", character, damage);
     }
 
-    */
+
     public void update(){
         actorAi.onUpdate();
     }

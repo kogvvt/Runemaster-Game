@@ -12,8 +12,8 @@ public class PlayScreen implements Screen {
     private List<String> messages;
 
     public PlayScreen(){
-        screenWidth = 8;
-        screenHeight = 21;
+        screenWidth = 80;
+        screenHeight = 23;
         messages = new ArrayList<String>();
         generateWorld();
         ActorFactory actorFactory = new ActorFactory(world);

@@ -51,6 +51,6 @@ public class WorldBuilder {
         return this;
     }
     public WorldBuilder buildCaves(){
-        return mapGenerator().smoothMap(8);
+        return mapGenerator().smoothMap(9);
     }
 }

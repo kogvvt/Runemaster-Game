@@ -6,7 +6,7 @@ public class StartScreen implements Screen{
 
     @Override
     public void displayOutput(AsciiPanel asciiPanel) {
-        asciiPanel.write("RuneMaster",1,1);
+        asciiPanel.writeCenter("RuneMaster",10);
         asciiPanel.writeCenter("Start", 22);
     }
 
