@@ -54,8 +54,8 @@ public class PlayScreen implements Screen {
         int top = getScrollingY();
         displayTiles(asciiPanel, left, top);
         asciiPanel.write(player.getCharacter(),player.x-left, player.y-top);
-        String hpStats = String.format("%3d/%3d hp", player.getHp(), player.getMaxHp());
-        asciiPanel.write(hpStats,1,23);
+        String hpStat = String.format("%3d/%3d hp", player.getHp(), player.getMaxHp());
+        asciiPanel.write(hpStat,1,23);
         displayMessages(asciiPanel,messages);
     }
 

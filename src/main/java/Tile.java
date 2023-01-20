@@ -1,11 +1,10 @@
-import asciiPanel.AsciiPanel;
-
-import java.awt.*;
-
 public enum Tile {
     FLOOR('.'),
     WALL('#'),
-    BOUNDS('#');
+    BOUNDS('|'),
+    STAIRS_DOWN('<'),
+    STAIRS_UP('>');
+
     private char character;
 
     public char getCharacter() {return character;}
@@ -15,5 +14,8 @@ public enum Tile {
     }
     public boolean isGround() {
         return this != WALL && this != BOUNDS ;
+    }
+    public boolean isDiggable() {
+        return this == WALL;
     }
 }

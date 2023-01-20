@@ -10,6 +10,6 @@ public class ActorAi {
         //update the actor
     }
     public void onNotify(String message){
-       // message.add(message);
+       //message.add(message);
     }
 }

@@ -2,12 +2,23 @@ class Actor {
     private World world;
     public int x;
     public int y;
+    public int z;
     private char character;
+    private String name;
+    private Inventory inventory;
+    private int fatigue;
+    private int maxFatigue;
+    private Item weapon;
+    private int level;
     private ActorAi actorAi;
     private int hp;
     private int maxHp;
     private int attack;
     private int defense;
+    private int vision;
+    private int detect;
+    private String deathCause;
+
 
     public Actor(World world, char character, int maxHp, int attack, int defense) {
         this.world = world;
@@ -16,10 +27,11 @@ class Actor {
         this.hp = maxHp;
         this.attack = attack;
         this.defense = defense;
+        this.vision = 9;
     }
 
     public char getCharacter() {
-        return character;
+        return this.character;
     }
 
     public void setActorAi(ActorAi actorAi) {
@@ -27,19 +39,22 @@ class Actor {
     }
 
     public int getHp() {
-        return hp;
+        return this.hp;
     }
 
     public int getMaxHp() {
-        return maxHp;
+        return this.maxHp;
     }
 
     public int getAttack() {
-        return attack;
+        return this.attack;
     }
 
     public int getDefense() {
-        return defense;
+        return this.defense;
+    }
+    public String getName(){
+        return this.name;
     }
 
     public void moveBy(int mx, int my) {
@@ -54,13 +69,9 @@ class Actor {
     public void notify(String message, Object ... args){
         actorAi.onNotify(String.format(message, args));
     }
-/*
-    public void attack(Actor actor){
-        world.removeActor(this);
-    }
-  */
+
    public void attack(Actor actor) {
-        int damage = Math.max(0, getAttack() - actor.getDefense());
+        int damage = Math.max(1, getAttack() - actor.getDefense());
         damage = (int)(Math.random() * damage) + 1;
         actor.hpMod(-damage);
         notify("You dealt '$s' %d damage", actor.getCharacter(), damage);
@@ -103,7 +114,7 @@ class Actor {
     }
 
     private String makeSecondActor(String message){
-        String [] words = message.split(" ");
+        String[] words = message.split(" ");
         words[0] = words[0] + "s" ;
         StringBuilder sb =new StringBuilder();
         for(String word : words){
