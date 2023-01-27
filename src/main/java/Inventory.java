@@ -44,4 +44,18 @@ public class Inventory {
         }
     }
 
+    public boolean contains(Item item) {
+        Item[] var5;
+        int var4 = (var5 = this.items).length;
+
+        for(int var3 = 0; var3 < var4; ++var3) {
+            Item i = var5[var3];
+            if (i == item) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

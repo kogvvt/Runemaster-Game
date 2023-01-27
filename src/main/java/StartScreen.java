@@ -2,8 +2,11 @@ import asciiPanel.AsciiPanel;
 
 import java.awt.event.KeyEvent;
 
-public class StartScreen implements Screen{
+public class StartScreen implements Screen {
 
+    public StartScreen(){
+
+    }
     @Override
     public void displayOutput(AsciiPanel asciiPanel) {
         asciiPanel.writeCenter("RuneMaster",10);

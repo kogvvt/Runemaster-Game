@@ -1,56 +1,191 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 public class WorldBuilder {
     private int width;
     private int height;
-    private Tile[][] tiles;
+    private int depth;
+    private Tile[][][] tiles;
+    private int[][][] regions;
+    private int nextRegion;
 
-    public WorldBuilder(int width, int height) {
+    public WorldBuilder(int width, int height, int depth) {
         this.width = width;
         this.height = height;
-        this.tiles = new Tile[width][height];
+        this.depth = depth;
+        this.tiles = new Tile[width][height][depth];
+        this.regions = new int[width][height][depth];
+        this.nextRegion = 1;
     }
 
     public World build(){
-        return new World(tiles);
+        return new World(this.tiles);
     }
 
     private WorldBuilder mapGenerator(){
-        for(int i=0; i<width; i++){
-            for(int j=0; j<height; j++){
-                tiles[i][j] = Math.random() < 0.5? Tile.FLOOR : Tile.WALL;
+        for(int i=0; i<this.width; ++i){
+            for(int j=0; j<this.height; ++j){
+                for(int k=0; k<this.depth; ++k) {
+                    tiles[i][j][k] = Math.random() < 0.5 ? Tile.FLOOR : Tile.WALL;
+                }
             }
         }
+
         return this;
     }
 
     private WorldBuilder smoothMap(int times){
-        Tile[][] smoothedTiles = new Tile[width][height];
+        Tile[][][] smoothedTiles = new Tile[this.width][this.height][this.depth];
         for(int time=0; time<times; time++) {
 
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
-                    int floors = 0;
-                    int rocks = 0;
-
-                    for (int ox = -1; ox < 2; ox++) {
-                        for (int oy = -1; oy < 2; oy++) {
-                            if (x + ox < 0 || x + ox >= width || y + oy < 0 || y + oy >= height) {
-                                continue;
-                            }
-                            if (tiles[x + ox][y + oy] == Tile.FLOOR) {
-                                floors++;
-                            } else {
-                                rocks++;
+                    for (int z = 0; z < this.depth; ++z) {
+                        int floors = 0;
+                        int rocks = 0;
+                        for (int ox = -1; ox < 2; ox++) {
+                            for (int oy = -1; oy < 2; oy++) {
+                                if (x + ox < 0 || x + ox >= width || y + oy < 0 || y + oy >= height) {
+                                    continue;
+                                }
+                                if (tiles[x + ox][y + oy][z] == Tile.FLOOR) {
+                                    floors++;
+                                } else {
+                                    rocks++;
+                                }
                             }
                         }
+                        smoothedTiles[x][y][z] = floors >= rocks ? Tile.FLOOR : Tile.WALL;
                     }
-                    smoothedTiles[x][y] = floors >= rocks ? Tile.FLOOR : Tile.WALL;
                 }
+
             }
-            tiles = smoothedTiles;
+            this.tiles = smoothedTiles;
         }
+
         return this;
     }
+    private WorldBuilder createRegions() {
+        this.regions = new int[this.width][this.height][this.depth];
+
+        for(int z = 0; z < this.depth; ++z) {
+            for(int x = 0; x < this.width; ++x) {
+                for(int y = 0; y < this.height; ++y) {
+                    if (this.tiles[x][y][z] != Tile.WALL && this.regions[x][y][z] == 0) {
+                        int size = this.fillRegion(this.nextRegion++, x, y, z);
+                        if (size < 25) {
+                            this.removeRegion(this.nextRegion - 1, z);
+                        }
+                    }
+                }
+            }
+        }
+
+        return this;
+    }
+
+    private void removeRegion(int region, int z) {
+        for(int x = 0; x < this.width; ++x) {
+            for(int y = 0; y < this.height; ++y) {
+                if (this.regions[x][y][z] == region) {
+                    this.regions[x][y][z] = 0;
+                    this.tiles[x][y][z] = Tile.WALL;
+                }
+            }
+        }
+
+    }
+
+    private int fillRegion(int region, int x, int y, int z) {
+        int size = 1;
+        ArrayList<Point> open = new ArrayList();
+        open.add(new Point(x, y, z));
+        this.regions[x][y][z] = region;
+
+        while(!open.isEmpty()) {
+            Point p = (Point)open.remove(0);
+            Iterator var = p.getNeighbors().iterator();
+
+            while(var.hasNext()) {
+                Point neighbor = (Point)var.next();
+                if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < this.width && neighbor.y < this.height && this.regions[neighbor.x][neighbor.y][neighbor.z] <= 0 && this.tiles[neighbor.x][neighbor.y][neighbor.z] != Tile.WALL) {
+                    ++size;
+                    this.regions[neighbor.x][neighbor.y][neighbor.z] = region;
+                    open.add(neighbor);
+                }
+            }
+        }
+
+        return size;
+    }
+
+    public WorldBuilder connectRegions() {
+        for(int z = 0; z < this.depth - 1; ++z) {
+            this.connectRegionsDown(z);
+        }
+
+        return this;
+    }
+
+    private void connectRegionsDown(int z) {
+        List<Integer> connected = new ArrayList();
+
+        for(int x = 0; x < this.width; ++x) {
+            for(int y = 0; y < this.height; ++y) {
+                int r = this.regions[x][y][z] * 1000 + this.regions[x][y][z + 1];
+                if (this.tiles[x][y][z] == Tile.FLOOR && this.tiles[x][y][z + 1] == Tile.FLOOR && !connected.contains(r)) {
+                    connected.add(r);
+                    this.connectRegionsDown(z, this.regions[x][y][z], this.regions[x][y][z + 1]);
+                }
+            }
+        }
+
+    }
+
+    private void connectRegionsDown(int z, int r1, int r2) {
+        List<Point> candidates = this.findRegionOverlaps(z, r1, r2);
+        int stairs = 0;
+
+        do {
+            Point p = (Point)candidates.remove(0);
+            this.tiles[p.x][p.y][z] = Tile.STAIRS_DOWN;
+            this.tiles[p.x][p.y][z + 1] = Tile.STAIRS_UP;
+            ++stairs;
+        } while(candidates.size() / stairs > 250);
+
+    }
+
+    public List<Point> findRegionOverlaps(int z, int r1, int r2) {
+        ArrayList<Point> candidates = new ArrayList();
+
+        for(int x = 0; x < this.width; ++x) {
+            for(int y = 0; y < this.height; ++y) {
+                if (this.tiles[x][y][z] == Tile.FLOOR && this.tiles[x][y][z + 1] == Tile.FLOOR && this.regions[x][y][z] == r1 && this.regions[x][y][z + 1] == r2) {
+                    candidates.add(new Point(x, y, z));
+                }
+            }
+        }
+
+        Collections.shuffle(candidates);
+        return candidates;
+    }
+
+    private WorldBuilder addExitStairs() {
+        int x,y;
+
+        do {
+            x = (int)(Math.random() * this.width);
+            y = (int)(Math.random() * this.height);
+        } while(this.tiles[x][y][0] != Tile.FLOOR);
+
+
+        this.tiles[x][y][0] = Tile.STAIRS_UP;
+        return this;
+    }
+
     public WorldBuilder buildCaves(){
-        return mapGenerator().smoothMap(9);
+        return this.mapGenerator().smoothMap(8).createRegions().connectRegions().addExitStairs();
     }
 }

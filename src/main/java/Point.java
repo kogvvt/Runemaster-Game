@@ -24,13 +24,13 @@ public class Point {
             return false;
         }
         Point p = (Point)o;
-        if(x != p.x){
+        if(this.x != p.x){
             return false;
         }
-        if(y != p.y){
+        if(this.y != p.y){
             return false;
         }
-        if(z != p.z){
+        if(this.z != p.z){
             return false;
         }
         return true;
@@ -38,11 +38,11 @@ public class Point {
 
     @Override
     public int hashCode() {
-        final  int prime = 31;
+        int prime = 31;
         int result = 1;
-        result = prime * result + x;
-        result = prime * result + y;
-        result = prime * result + z;
+        result = prime * result + this.x;
+        result = prime * result + this.y;
+        result = prime * result + this.x;
         return result;
     }
 
@@ -51,9 +51,8 @@ public class Point {
         for (int ox = -1; ox<2; ox++){
             for(int oy = -1; oy<2; oy++) {
                 if (ox == 0 && oy == 0) {
-                    continue;
+                    neighbors.add(new Point(x + ox, y + oy, z));
                 }
-                neighbors.add(new Point(x + ox, y + oy, z));
             }
         }
         Collections.shuffle(neighbors);

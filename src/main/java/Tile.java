@@ -3,7 +3,8 @@ public enum Tile {
     WALL('#'),
     BOUNDS('|'),
     STAIRS_DOWN('<'),
-    STAIRS_UP('>');
+    STAIRS_UP('>'),
+    UNKNOWN(' ');
 
     private char character;
 

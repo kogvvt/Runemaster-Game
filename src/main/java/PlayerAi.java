@@ -8,10 +8,11 @@ public class PlayerAi extends ActorAi {
     }
 
     @Override
-    public void onEnter(int x, int y, Tile tile) {
+    public void onEnter(int x, int y, int z, Tile tile) {
         if(tile.isGround()){
-            actor.x = x;
-            actor.y = y;
+            this.actor.x = x;
+            this.actor.y = y;
+            this.actor.z = z;
         }
     }
 
