@@ -6,43 +6,70 @@ import java.util.List;
 
 public class PlayScreen implements Screen {
     private World world;
-    private int screenHeight = 80;
-    private int screenWidth = 23;
+    private int screenHeight;
+    private int screenWidth;
     public Actor player;
     private List<String> messages = new ArrayList();
     private FogOfWar fov;
     private Screen subscreen;
 
     public PlayScreen(){
+        screenWidth = 80;
+        screenHeight = 23;
         generateWorld();
-       // this.fov = new FogOfWar(this.world);
-        ActorFactory actorFactory = new ActorFactory(world);
-        createActors(actorFactory);
+        this.fov = new FogOfWar(this.world);
+        GameFactory gameFactory = new GameFactory(world);
+        createActors(gameFactory);
+        createItems(gameFactory);
     }
 
-    private void createActors(ActorFactory actorFactory){
-        player = actorFactory.newPlayer(messages);
-        for(int i = 0; i <7; ++i){
-            actorFactory.newEnemy();
+    private void createActors(GameFactory factory){
+        player = factory.newPlayer(messages);
+
+        for (int z = 0; z < world.getDepth(); z++){
+            for (int i = 0; i < z * 2 + 1; i++){
+                factory.newEnemy();
+            }
         }
     }
 
     private void generateWorld(){
         this.world = (new WorldBuilder(90,32,5)).buildCaves().build();
     }
+    private String hunger(){
+        if (player.getFatigue() < player.getMaxFatigue() * 0.10)
+            return "Starving";
+        else if (player.getFatigue() < player.getMaxFatigue() * 0.25)
+            return "Hungry";
+        else if (player.getFatigue() > player.getMaxFatigue() * 0.90)
+            return "Stuffed";
+        else if (player.getFatigue() > player.getMaxFatigue() * 0.75)
+            return "Full";
+        else
+            return "";
+    }
 
-    private void displayTiles(AsciiPanel terminal, int left, int top){
-        for(int i=0;i<screenWidth;i++){
-            for(int j=0;j<screenHeight;j++){
-                int wx = i+left;
-                int wy = j+top;
-                int wz = 0;
-                Actor actor = world.actorAtLocation(wx,wy);
-                if(actor != null){
-                    terminal.write(actor.getCharacter(), actor.x - left, actor.y - top);
-                }else{
-                    terminal.write(world.character(wx,wy,wz),i,j);
-                }
+    private void displayMessages(AsciiPanel terminal, List<String> messages) {
+        int top = screenHeight - messages.size();
+        for (int i = 0; i < messages.size(); i++){
+            terminal.writeCenter(messages.get(i), top + i);
+        }
+        if (subscreen == null)
+            messages.clear();
+    }
+
+    private void displayTiles(AsciiPanel terminal, int left, int top) {
+        fov.update(player.x, player.y, player.z, player.getVision());
+
+        for (int x = 0; x < screenWidth; x++){
+            for (int y = 0; y < screenHeight; y++){
+                int wx = x + left;
+                int wy = y + top;
+
+                if (player.canSee(wx, wy, player.z))
+                    terminal.write(world.character(wx, wy, player.z), x, y);
+                else
+                    terminal.write(fov.tile(wx, wy, player.z).getCharacter(), x, y);
             }
         }
     }
@@ -53,133 +80,85 @@ public class PlayScreen implements Screen {
         int top = getScrollingY();
         displayTiles(asciiPanel, left, top);
         asciiPanel.write(player.getCharacter(),player.x-left, player.y-top);
-        String hpStat = String.format("%3d/%3d hp", player.getHp(), player.getMaxHp());
-        asciiPanel.write(hpStat,1,23);
+        String stats = String.format("%3d/%3d hp %8s", player.getHp(), player.getMaxHp(), player.getFatigue());
+        asciiPanel.write(stats,1,23);
         displayMessages(asciiPanel,messages);
     }
 
+
+
     @Override
-    /*
-    public Screen respondToUserInput(KeyEvent keyEvent) {
-        switch (keyEvent.getKeyCode()) {
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_W:
-                player.moveBy(0, -1);
-                break;
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_A:
-                player.moveBy(-1, 0);
-                break;
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_S:
-                player.moveBy(0, 1);
-                break;
-            case KeyEvent.VK_RIGHT:
-            case KeyEvent.VK_D:
-                player.moveBy(1, 0);
-                break;
-            case KeyEvent.VK_Q:
-                player.moveBy(-1, -1);
-                break;
-            case KeyEvent.VK_E:
-                player.moveBy(1, -1);
-                break;
-            case KeyEvent.VK_Z:
-                player.moveBy(-1, 1);
-                break;
-            case KeyEvent.VK_X:
-                player.moveBy(1, 1);
-                break;
-        }
-        world.update();
-        return this;
-    }
-
-*/
-
     public Screen respondToUserInput(KeyEvent key) {
-        int level = this.player.getLevel();
-        if (this.subscreen != null) {
-            this.subscreen = this.subscreen.respondToUserInput(key);
+        int level = player.getLevel();
+
+        if (subscreen != null) {
+            subscreen = subscreen.respondToUserInput(key);
         } else {
             switch (key.getKeyCode()) {
-                case 37:
-                case 72:
-                    this.player.moveBy(-1, 0, 0);
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_A:
+                    player.moveBy(-1, 0, 0);
                     break;
-                case 38:
-                case 75:
-                    this.player.moveBy(0, -1, 0);
+                case KeyEvent.VK_RIGHT:
+                case KeyEvent.VK_D:
+                    player.moveBy(1, 0, 0);
                     break;
-                case 39:
-                case 76:
-                    this.player.moveBy(1, 0, 0);
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_W:
+                    player.moveBy(0, -1, 0);
                     break;
-                case 40:
-                case 74:
-                    this.player.moveBy(0, 1, 0);
+                case KeyEvent.VK_DOWN:
+                case KeyEvent.VK_S:
+                    player.moveBy(0, 1, 0);
                     break;
-                case 66:
-                    this.player.moveBy(-1, 1, 0);
+                case KeyEvent.VK_Q:
+                    player.moveBy(-1, -1, 0);
                     break;
-                case 78:
-                    this.player.moveBy(1, 1, 0);
+                case KeyEvent.VK_E:
+                    player.moveBy(1, -1, 0);
                     break;
-                case 85:
-                    this.player.moveBy(1, -1, 0);
+                case KeyEvent.VK_Z:
+                    player.moveBy(-1, 1, 0);
                     break;
-                case 89:
-                    this.player.moveBy(-1, -1, 0);
-                    break;
-            }
-
-            switch (key.getKeyChar()) {
-                case ',':
-                case 'g':
-                    this.player.pickup();
-                    break;
-                case '<':
-                    if (this.userIsTryingToExit()) {
-                        return this.userExits();
-                    }
-
-                    this.player.moveBy(0, 0, -1);
-                    break;
-                case '>':
-                    this.player.moveBy(0, 0, 1);
+                case KeyEvent.VK_X:
+                    player.moveBy(1, 1, 0);
                     break;
             }
-        }
-
-        if (this.player.getLevel() > level) {
-            //this.subscreen = new LevelUpScreen(this.player, this.player.level() - level);
-        }
-
-        if (this.subscreen == null) {
-            this.world.update();
-        }
-
-        return (Screen)(this.player.getHp() < 1 ? new GameOver() : this);
-    }
-
-    private boolean userIsTryingToExit() {
-        return this.player.z == 0 && this.world.tile(this.player.x, this.player.y, this.player.z) == Tile.STAIRS_UP;
-    }
-
-    private Screen userExits() {
-        Item[] var4;
-        int var3 = (var4 = this.player.getInventory().getItems()).length;
-
-        for(int var2 = 0; var2 < var3; ++var2) {
-            Item item = var4[var2];
-            if (item != null && item.getName().equals("teddy bear")) {
-                return new WinScreen();
+                switch (key.getKeyChar()) {
+                    case 'g':
+                    case ',':
+                        player.pickup();
+                        break;
+                    case '<':
+                        if (userIsTryingToExit())
+                            return userExits();
+                        else
+                            player.moveBy(0, 0, -1);
+                        break;
+                    case '>':
+                        player.moveBy(0, 0, 1);
+                        break;
+                }
             }
+
+            if (player.getLevel() > level)
+//                 subscreen = new LevelUpScreen(player, player.getLevel() - level);
+
+                if (subscreen == null)
+                    world.update();
+
+            if (player.getHp() < 1) {
+                return new GameOver(player);
+            }
+            return this;
         }
 
-        this.player.modifyHp(0);
-        return new GameOver();
+
+
+    private boolean userIsTryingToExit(){
+        return player.z == 0 && world.tile(player.x, player.y, player.z) == Tile.STAIRS_UP;
     }
+
     public int getScrollingX(){
         return Math.max(0,Math.min(player.x - screenWidth/2, world.getWidth() - screenWidth));
     }
@@ -188,14 +167,26 @@ public class PlayScreen implements Screen {
         return Math.max(0,Math.min(player.y - screenHeight/2, world.getHeight() - screenHeight));
     }
 
-    private void displayMessages(AsciiPanel asciiPanel, List<String> messages){
-        int top = screenHeight - messages.size();
-        for(int i = 0; i<messages.size(); i++){
-            asciiPanel.writeCenter(messages.get(i), top+i);
+    private Screen userExits(){
+        for (Item item : player.getInventory().getItems()){
+            if (item != null && item.getName().equalsIgnoreCase("Fehu Rune"))
+                return new WinScreen();
         }
-        messages.clear();
+        player.modifyHp(0, "Died while cowardly fleeing the caves.");
+        return new GameOver(player);
     }
 
+    private void createItems(GameFactory factory) {
+        for (int z = 0; z < world.getDepth(); z++){
 
+            factory.newFruit(z);
+            factory.newBread(z);
+            factory.randomWeapon(z);
+            factory.randomWeapon(z);
+
+
+        }
+        factory.newWinningItem(world.getDepth() - 1);
+    }
 
 }

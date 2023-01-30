@@ -3,6 +3,10 @@ import asciiPanel.AsciiPanel;
 import java.awt.event.KeyEvent;
 
 public class GameOver implements Screen {
+    private Actor player;
+    public GameOver(Actor player){
+        this.player = player;
+    }
     @Override
     public void displayOutput(AsciiPanel asciiPanel) {
         asciiPanel.write("Game over!", 1 ,1);

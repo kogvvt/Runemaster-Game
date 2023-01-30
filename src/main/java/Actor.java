@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 class Actor {
     private World world;
     public int x;
@@ -13,9 +16,13 @@ class Actor {
     private ActorAi actorAi;
     private int hp;
     private int maxHp;
+    private int regenHpCooldown;
+    private int regenHpPer1000;
+    public void modifyRegenHpPer1000(int amount) { regenHpPer1000 += amount; }
     private int attack;
     private int defense;
     private int vision;
+    public void modifyVision(int value) { vision += value; }
     private int xp;
     private int detect;
     private String deathCause;
@@ -30,9 +37,11 @@ class Actor {
         this.defense = defense;
         this.name = name;
         this.inventory = new Inventory(30);
-        this.maxFatigue = 1000;
+        this.maxFatigue = 100000;
         this.fatigue = maxFatigue;
         this.vision = 9;
+        this.regenHpPer1000 = 10;
+        this.level = level;
     }
 
     public char getCharacter() {
@@ -51,8 +60,66 @@ class Actor {
         return this.maxHp;
     }
 
-    public void modifyHp(int hpAmount){
-        this.maxHp += hpAmount;
+    public void modifyHp(int amount, String deathCause) {
+        hp += amount;
+        this.deathCause = deathCause;
+
+        if (hp > maxHp) {
+            hp = maxHp;
+        } else if (hp < 1) {
+            doAction("die");
+            leaveCorpse();
+            world.removeActor(this);
+        }
+    }
+
+    private void leaveCorpse(){
+        Item corpse = new Item('%', name + " corpse", null);
+        corpse.modifyFatigue(maxHp * 5);
+        world.addAtEmptySpace(corpse, x, y, z);
+        for (Item item : inventory.getItems()){
+            if (item != null)
+                drop(item);
+        }
+    }
+    public void dig(int wx, int wy, int wz) {
+        modifyFatigue(-10);
+        world.dig(wx, wy, wz);
+        doAction("dig");
+    }
+    public void modifyFatigue(int amount) {
+        fatigue += amount;
+
+        if (fatigue > maxFatigue) {
+            maxFatigue = (maxFatigue + fatigue) / 2;
+            fatigue = maxFatigue;
+            notify("You can't belive your stomach can hold that much!");
+            modifyHp(-1, "Killed by overeating.");
+        } else if (fatigue < 1 && isPlayer()) {
+            modifyHp(-1000, "Starved to death.");
+        }
+    }
+    public void update(){
+        modifyFatigue(-1);
+        regenerateHealth();
+        actorAi.onUpdate();
+    }
+
+    private void regenerateHealth(){
+        regenHpCooldown -= regenHpPer1000;
+        if (regenHpCooldown < 0){
+            if (hp < maxHp){
+                modifyHp(1, "Died from regenerating health?");
+                modifyFatigue(-1);
+            }
+            regenHpCooldown += 1000;
+        }
+    }
+
+    public void modifyMaxHp(int amount) { maxHp += amount; }
+
+    public boolean isPlayer(){
+        return character == '@';
     }
 
     public int getAttack() {
@@ -110,8 +177,8 @@ class Actor {
         while(this.xp > (int)(Math.pow((double)this.level, 1.75 ) * 25.0)){
             ++this.level;
             this.doAction("Advanced to %d level!!!", this.level);
-          //  this.actorAi.onGainLevel();
-            //this.modifyHp(this.level*2, "This isn't possble(?)");
+            this.actorAi.onGainLevel();
+            this.modifyHp(this.level*2, "This isn't possble(?)");
         }
 
     }
@@ -121,29 +188,34 @@ class Actor {
             Tile tile = this.world.tile(this.x + mx, this.y + my, this.z + mz);
             if (mz == -1) {
                 if (tile != Tile.STAIRS_DOWN) {
+                    this.doAction("walk up the stairs to level %d", this.z + mz + 1);
+                }else{
                     this.doAction("try to go up but are stopped by the cave ceiling");
                     return;
                 }
 
-                this.doAction("walk up the stairs to level %d", this.z + mz + 1);
             } else if (mz == 1) {
                 if (tile != Tile.STAIRS_UP) {
+                    this.doAction("walk down the stairs to level %d", this.z + mz + 1);
+                }else{
                     this.doAction("try to go down but are stopped by the cave floor");
                     return;
                 }
-
-                this.doAction("walk down the stairs to level %d", this.z + mz + 1);
             }
 
             Actor actor = this.world.actor(this.x + mx, this.y + my, this.z + mz);
-            //this.modifyFood(-1);
+            this.modifyFatigue(-1);
             if (actor == null) {
                 this.actorAi.onEnter(this.x + mx, this.y + my, this.z + mz, tile);
             } else {
-                this.attack(actor);
+                this.normalAttack(actor);
             }
 
         }
+    }
+
+    public void normalAttack(Actor actor){
+        attack(actor, getAttack(), "Hit the %s for %d damage", actor.getName());
     }
 
     public void gainXp(Actor actor) {
@@ -158,49 +230,75 @@ class Actor {
         actorAi.onNotify(String.format(message, args));
     }
 
-   public void attack(Actor actor) {
-        int damage = Math.max(1, getAttack() - actor.getDefense());
-        damage = (int)(Math.random() * damage) + 1;
-        actor.hpMod(-damage, null);
-        notify("You dealt '$s' %d damage", actor.getCharacter(), damage);
-        actor.notify("'%s' dealt you %d damage", character, damage);
-    }
-    public void update(){
-        actorAi.onUpdate();
-    }
-    public void hpMod(int hpAmount, String deathCause){
-        hp += hpAmount;
-        if(hp < 1){
-            doAction("Died!");
-            world.removeActor(this);
-        }
-    }
+   public void attack(Actor actor, int attack, String action, Object... args){
+       modifyFatigue(-2);
 
-    public void doAction(String message, Object ... args){
-        int radius = 9;
-        for(int ox = -radius; ox < radius+1; ox++){
-            for(int oy = -radius; oy < radius+1; oy++){
-                if(ox*ox + oy*oy > radius*radius){
+       int amount = Math.max(0, attack - actor.getDefense());
+
+       amount = (int)(Math.random() * amount) + 1;
+
+       Object[] args2 = new Object[args.length+1];
+       for (int i = 0; i < args.length; i++){
+           args2[i] = args[i];
+       }
+       args2[args2.length - 1] = amount;
+
+       doAction(action, args2);
+
+       actor.modifyHp(-amount, "Killed by a " + name);
+
+       if (actor.hp < 1)
+           gainXp(actor);
+    }
+    private List<Actor> getActorsWhoSeeMe(){
+        List<Actor> others = new ArrayList<Actor>();
+        int r = 9;
+        for (int ox = -r; ox < r+1; ox++){
+            for (int oy = -r; oy < r+1; oy++){
+                if (ox*ox + oy*oy > r*r)
                     continue;
-                }
-                Actor actor = world.actorAtLocation(x+ox, y+oy);
-                if(actor == null){
+
+                Actor other = world.actor(x+ox, y+oy, z);
+
+                if (other == null)
                     continue;
-                }
-                if(actor == this){
-                    actor.notify("You", message + ".",args);
-                }else{
-                    actor.notify(String.format("The '%s' %s", getCharacter(), makeSecondActor(message)),args);
-                }
+
+                others.add(other);
+            }
+        }
+        return others;
+    }
+    public void doAction(String message, Object ... params){
+        for (Actor other : getActorsWhoSeeMe()){
+            if (other == this){
+                other.notify("You " + message + ".", params);
+            } else {
+                other.notify(String.format("The %s %s.", name, makeSecondActor(message)), params);
             }
         }
     }
+
+    public void doAction(Item item, String message, Object ... params){
+        if (hp < 1)
+            return;
+
+        for (Actor other : getActorsWhoSeeMe()){
+            if (other == this){
+                other.notify("You " + message + ".", params);
+            } else {
+                other.notify(String.format("The %s %s.", name, makeSecondActor(message)), params);
+            }
+            other.learnName(item);
+        }
+    }
+
+
     public boolean canEnter(int wx, int wy, int wz){
         return world.tile(wx,wy,wz).isGround() && world.actor(wx,wy,wz) == null;
     }
 
     public String nameOf(Item item) {
-        return this.actorAi.getItemsName(item);
+        return this.actorAi.getItemName(item);
     }
 
     private String makeSecondActor(String message){
@@ -261,16 +359,16 @@ class Actor {
         this.unequip(item);
         this.world.addAtEmptySpace(item, wx, wy, wz);
     }
-    public void pickup() {
-        Item item = this.world.item(this.x, this.y, this.z);
-        if (!this.inventory.isFull() && item != null) {
-            this.doAction("pickup a %s", this.nameOf(item));
-            this.world.removeItemAt(this.x, this.y, this.z);
-            this.inventory.add(item);
-        } else {
-            this.doAction("grab at the ground");
-        }
+    public void pickup(){
+        Item item = world.item(x, y, z);
 
+        if (inventory.isFull() || item == null){
+            doAction("grab at the ground");
+        } else {
+            doAction("pickup a %s", nameOf(item));
+            world.removeItemAt(x, y, z);
+            inventory.add(item);
+        }
     }
 
     public void drop(Item item) {
@@ -298,7 +396,10 @@ class Actor {
         return this.canSee(wx, wy, wz) ? this.world.tile(wx, wy, wz) : this.actorAi.rememberedTile(wx, wy, wz);
     }
 
-
+    public void learnName(Item item){
+        notify("The " + item.getDescription() + " is a " + item.getName() + "!");
+        actorAi.setName(item, item.getName());
+    }
 
 
 }

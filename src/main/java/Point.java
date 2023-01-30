@@ -51,8 +51,9 @@ public class Point {
         for (int ox = -1; ox<2; ox++){
             for(int oy = -1; oy<2; oy++) {
                 if (ox == 0 && oy == 0) {
-                    neighbors.add(new Point(x + ox, y + oy, z));
+                    continue;
                 }
+                neighbors.add(new Point(x + ox, y + oy, z));
             }
         }
         Collections.shuffle(neighbors);

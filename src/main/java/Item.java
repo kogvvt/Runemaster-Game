@@ -5,7 +5,11 @@ public class Item {
     private int attackValue;
     private int defenseValue;
 
-    public Item(char character, String name, String description, int attackValue, int defenseValue) {
+    private int fatigue;
+    public int getFatigue() { return fatigue; }
+    public void modifyFatigue(int amount) { fatigue += amount; }
+
+    public Item(char character, String name, String description) {
         this.character = character;
         this.name = name;
         this.description = description == null? name : description;
@@ -52,7 +56,8 @@ public class Item {
     public void setDefenseValue(int defenseValue) {
         this.defenseValue = defenseValue;
     }
-
+    public void modifyAttackValue(int amount) { attackValue += amount; }
+    public void modifyDefenseValue(int amount) { defenseValue += amount; }
     public String getItemStats() {
         String itemStats = "";
         if(this.attackValue != 0){

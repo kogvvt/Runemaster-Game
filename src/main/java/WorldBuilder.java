@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class WorldBuilder {
@@ -100,24 +99,26 @@ public class WorldBuilder {
 
     private int fillRegion(int region, int x, int y, int z) {
         int size = 1;
-        ArrayList<Point> open = new ArrayList();
-        open.add(new Point(x, y, z));
-        this.regions[x][y][z] = region;
+        ArrayList<Point> open = new ArrayList<Point>();
+        open.add(new Point(x,y,z));
+        regions[x][y][z] = region;
 
-        while(!open.isEmpty()) {
-            Point p = (Point)open.remove(0);
-            Iterator var = p.getNeighbors().iterator();
+        while (!open.isEmpty()){
+            Point p = open.remove(0);
 
-            while(var.hasNext()) {
-                Point neighbor = (Point)var.next();
-                if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < this.width && neighbor.y < this.height && this.regions[neighbor.x][neighbor.y][neighbor.z] <= 0 && this.tiles[neighbor.x][neighbor.y][neighbor.z] != Tile.WALL) {
-                    ++size;
-                    this.regions[neighbor.x][neighbor.y][neighbor.z] = region;
-                    open.add(neighbor);
-                }
+            for (Point neighbor : p.getNeighbors()){
+                if (neighbor.x < 0 || neighbor.y < 0 || neighbor.x >= width || neighbor.y >= height)
+                    continue;
+
+                if (regions[neighbor.x][neighbor.y][neighbor.z] > 0
+                        || tiles[neighbor.x][neighbor.y][neighbor.z] == Tile.WALL)
+                    continue;
+
+                size++;
+                regions[neighbor.x][neighbor.y][neighbor.z] = region;
+                open.add(neighbor);
             }
         }
-
         return size;
     }
 
@@ -129,19 +130,20 @@ public class WorldBuilder {
         return this;
     }
 
-    private void connectRegionsDown(int z) {
-        List<Integer> connected = new ArrayList();
+    private void connectRegionsDown(int z){
+        List<Integer> connected = new ArrayList<Integer>();
 
-        for(int x = 0; x < this.width; ++x) {
-            for(int y = 0; y < this.height; ++y) {
-                int r = this.regions[x][y][z] * 1000 + this.regions[x][y][z + 1];
-                if (this.tiles[x][y][z] == Tile.FLOOR && this.tiles[x][y][z + 1] == Tile.FLOOR && !connected.contains(r)) {
+        for (int x = 0; x < width; x++){
+            for (int y = 0; y < height; y++){
+                int r = regions[x][y][z] * 1000 + regions[x][y][z+1];
+                if (tiles[x][y][z] == Tile.FLOOR
+                        && tiles[x][y][z+1] == Tile.FLOOR
+                        && !connected.contains(r)){
                     connected.add(r);
-                    this.connectRegionsDown(z, this.regions[x][y][z], this.regions[x][y][z + 1]);
+                    connectRegionsDown(z, regions[x][y][z], regions[x][y][z+1]);
                 }
             }
         }
-
     }
 
     private void connectRegionsDown(int z, int r1, int r2) {
@@ -173,15 +175,16 @@ public class WorldBuilder {
     }
 
     private WorldBuilder addExitStairs() {
-        int x,y;
+        int x = -1;
+        int y = -1;
 
         do {
-            x = (int)(Math.random() * this.width);
-            y = (int)(Math.random() * this.height);
-        } while(this.tiles[x][y][0] != Tile.FLOOR);
+            x = (int)(Math.random() * width);
+            y = (int)(Math.random() * height);
+        }
+        while (tiles[x][y][0] != Tile.FLOOR);
 
-
-        this.tiles[x][y][0] = Tile.STAIRS_UP;
+        tiles[x][y][0] = Tile.STAIRS_UP;
         return this;
     }
 

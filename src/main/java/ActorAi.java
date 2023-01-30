@@ -1,5 +1,4 @@
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +13,7 @@ public class ActorAi {
         this.items = new HashMap();
     }
 
-    public String getItemsName(Item item){
+    public String getItemName(Item item){
         String name = (String) this.items.get(item.getName());
         return name != null ? item.getDescription(): name;
     }
@@ -39,26 +38,20 @@ public class ActorAi {
 
     }
     public boolean canSee(int wx, int wy, int wz) {
-        if (this.actor.z != wz) {
+        if (actor.z != wz)
             return false;
-        } else if ((this.actor.x - wx) * (this.actor.x - wx) + (this.actor.y - wy) * (this.actor.y - wy) > this.actor.getVision() * this.actor.getVision()) {
+
+        if ((actor.x-wx)*(actor.x-wx) + (actor.y-wy)*(actor.y-wy) > actor.getVision()*actor.getVision())
             return false;
-        } else {
-            Iterator var5 = (new Line(this.actor.x, this.actor.y, wx, wy)).iterator();
 
-            Point p;
-            do {
-                do {
-                    if (!var5.hasNext()) {
-                        return true;
-                    }
-
-                    p = (Point)var5.next();
-                } while(this.actor.realTile(p.x, p.y, wz).isGround());
-            } while(p.x == wx && p.y == wy);
+        for (Point p : new Line(actor.x, actor.y, wx, wy)){
+            if (actor.realTile(p.x, p.y, wz).isGround() || p.x == wx && p.y == wy)
+                continue;
 
             return false;
         }
+
+        return true;
     }
 
     public void wander() {
@@ -70,9 +63,9 @@ public class ActorAi {
         }
     }
 
-//    public void onGainLevel() {
-//        (new LevelUpController()).autoLevelUp(this.actor);
-//    }
+    public void onGainLevel() {
+        (new LevelUpController()).autoLevelUp(this.actor);
+    }
 
     public Tile rememberedTile(int wx, int wy, int wz) {
         return Tile.UNKNOWN;
