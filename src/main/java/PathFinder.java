@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class PathFinder {
     private ArrayList<Point> open = new ArrayList();
@@ -10,6 +9,10 @@ public class PathFinder {
     private HashMap<Point, Integer> totalCost = new HashMap();
 
     public PathFinder() {
+        this.open = new ArrayList<Point>();
+        this.closed = new ArrayList<Point>();
+        this.parents = new HashMap<Point, Point>();
+        this.totalCost = new HashMap<Point, Integer>();
     }
 
     private int heuristicCost(Point from, Point to) {
@@ -17,12 +20,12 @@ public class PathFinder {
     }
 
     private int costToGetTo(Point from) {
-        return this.parents.get(from) == null ? 0 : 1 + this.costToGetTo((Point) this.parents.get(from));
+        return this.parents.get(from) == null ? 0 : (1 + this.costToGetTo( this.parents.get(from)));
     }
 
     private int totalCost(Point from, Point to) {
         if (this.totalCost.containsKey(from)) {
-            return (Integer) this.totalCost.get(from);
+            return this.totalCost.get(from);
         } else {
             int cost = this.costToGetTo(from) + this.heuristicCost(from, to);
             this.totalCost.put(from, cost);
@@ -48,47 +51,32 @@ public class PathFinder {
             this.closed.add(closest);
             if (closest.equals(end)) {
                 return this.createPath(start, closest);
+            }else{
+                this.checkNeighbors(actor, end, closest);
             }
-
-            this.checkNeighbors(actor, end, closest);
         }
-
         return null;
     }
 
     private Point getClosestPoint(Point end) {
-        Point closest = (Point) this.open.get(0);
-        Iterator var4 = this.open.iterator();
-
-        while (var4.hasNext()) {
-            Point other = (Point) var4.next();
-            if (this.totalCost(other, end) < this.totalCost(closest, end)) {
+        Point closest = open.get(0);
+        for (Point other : open){
+            if (totalCost(other, end) < totalCost(closest, end))
                 closest = other;
-            }
         }
-
         return closest;
     }
 
     private void checkNeighbors(Actor actor, Point end, Point closest) {
-        Iterator var5 = closest.getNeighbors().iterator();
+        for (Point neighbor : closest.getNeighbors()) {
+            if (closed.contains(neighbor) || !actor.canEnter(neighbor.x, neighbor.y, actor.z) && !neighbor.equals(end)) {
+                continue;
+            }
 
-        while (true) {
-            Point neighbor;
-            do {
-                do {
-                    if (!var5.hasNext()) {
-                        return;
-                    }
-
-                    neighbor = (Point) var5.next();
-                } while (this.closed.contains(neighbor));
-            } while (!actor.canEnter(neighbor.x, neighbor.y, actor.z) && !neighbor.equals(end));
-
-            if (this.open.contains(neighbor)) {
-                this.reParentNeighborIfNecessary(closest, neighbor);
+            if (open.contains(neighbor)) {
+                reParentNeighborIfNecessary(closest, neighbor);
             } else {
-                this.reParentNeighbor(closest, neighbor);
+                reParentNeighbor(closest, neighbor);
             }
         }
     }
@@ -99,10 +87,10 @@ public class PathFinder {
     }
 
     private void reParentNeighborIfNecessary(Point closest, Point neighbor) {
-        Point originalParent = (Point) this.parents.get(neighbor);
-        double currentCost = (double) this.costToGetTo(neighbor);
+        Point originalParent = this.parents.get(neighbor);
+        double currentCost = this.costToGetTo(neighbor);
         this.reParent(neighbor, closest);
-        double reparentCost = (double) this.costToGetTo(neighbor);
+        double reparentCost = this.costToGetTo(neighbor);
         if (reparentCost < currentCost) {
             this.open.remove(neighbor);
         } else {
@@ -112,9 +100,11 @@ public class PathFinder {
     }
 
     private ArrayList<Point> createPath(Point start, Point end) {
-        ArrayList path;
-        for (path = new ArrayList(); !end.equals(start); end = (Point) this.parents.get(end)) {
+        ArrayList<Point> path = new ArrayList<Point>();
+
+        while (!end.equals(start)) {
             path.add(end);
+            end = parents.get(end);
         }
 
         Collections.reverse(path);

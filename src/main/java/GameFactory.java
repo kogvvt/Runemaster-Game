@@ -13,15 +13,15 @@ public class GameFactory {
         new PlayerAi(player,messages,fow);
         return player;
     }
-    public Actor newEnemy(){
-        Actor enemy = new Actor(world, 'E',10,5,2, "Enemy");
+    public Actor newSkeleton(){
+        Actor enemy = new Actor(world, 'S',10,5,2, "Skeleton");
         world.addActor(enemy,0);
-        new EnemyAi(enemy);
+        new SkeletonAi(enemy);
         return enemy;
     }
 
     public Item newWinningItem(int depth){
-        Item item = new Item('F', "Fehu rune", null);
+        Item item = new Item('F', "Fehu Rune", null);
         world.addItemAtEmptyLocation(item, depth);
         return item;
     }

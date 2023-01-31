@@ -35,6 +35,7 @@ public class Main extends JFrame implements KeyListener {
         Main app = new Main();
         app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         app.setVisible(true);
+        app.setResizable(false);
     }
 
 

@@ -28,7 +28,7 @@ public class PlayScreen implements Screen {
 
         for (int z = 0; z < world.getDepth(); z++){
             for (int i = 0; i < z * 2 + 1; i++){
-                factory.newEnemy();
+                factory.newSkeleton();
             }
         }
     }
@@ -123,6 +123,9 @@ public class PlayScreen implements Screen {
                 case KeyEvent.VK_X:
                     player.moveBy(1, 1, 0);
                     break;
+                case KeyEvent.VK_I:
+                    new Equip(player);
+                    break;
             }
                 switch (key.getKeyChar()) {
                     case 'g':
@@ -138,18 +141,19 @@ public class PlayScreen implements Screen {
                     case '>':
                         player.moveBy(0, 0, 1);
                         break;
+                    case'`':
+                        player.setFatigue(10000);
                 }
             }
 
-            if (player.getLevel() > level)
-//                 subscreen = new LevelUpScreen(player, player.getLevel() - level);
-
-                if (subscreen == null)
-                    world.update();
+            if (subscreen == null) {
+                world.update();
+            }
 
             if (player.getHp() < 1) {
                 return new GameOver(player);
             }
+
             return this;
         }
 

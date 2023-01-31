@@ -37,11 +37,11 @@ class Actor {
         this.defense = defense;
         this.name = name;
         this.inventory = new Inventory(30);
-        this.maxFatigue = 100000;
+        this.maxFatigue = 1000;
         this.fatigue = maxFatigue;
         this.vision = 9;
         this.regenHpPer1000 = 10;
-        this.level = level;
+        this.level = 1;
     }
 
     public char getCharacter() {
@@ -85,7 +85,7 @@ class Actor {
     public void dig(int wx, int wy, int wz) {
         modifyFatigue(-10);
         world.dig(wx, wy, wz);
-        doAction("dig");
+        doAction("dig a hole!");
     }
     public void modifyFatigue(int amount) {
         fatigue += amount;
@@ -93,10 +93,10 @@ class Actor {
         if (fatigue > maxFatigue) {
             maxFatigue = (maxFatigue + fatigue) / 2;
             fatigue = maxFatigue;
-            notify("You can't belive your stomach can hold that much!");
-            modifyHp(-1, "Killed by overeating.");
+            notify("You can't eat that much!");
+            modifyHp(-1, "Overeating is not good for you!");
         } else if (fatigue < 1 && isPlayer()) {
-            modifyHp(-1000, "Starved to death.");
+            modifyHp(-1000, "You died due to starvation!");
         }
     }
     public void update(){
@@ -152,6 +152,10 @@ class Actor {
         return this.fatigue;
     }
 
+    public void setFatigue(int fatigue) {
+        this.fatigue = fatigue;
+    }
+
     public Item getWeapon(){
         return this.weapon;
     }
@@ -178,7 +182,7 @@ class Actor {
             ++this.level;
             this.doAction("Advanced to %d level!!!", this.level);
             this.actorAi.onGainLevel();
-            this.modifyHp(this.level*2, "This isn't possble(?)");
+            this.modifyHp(this.level*2, null);
         }
 
     }
@@ -187,7 +191,7 @@ class Actor {
         if (mx != 0 || my != 0 || mz != 0) {
             Tile tile = this.world.tile(this.x + mx, this.y + my, this.z + mz);
             if (mz == -1) {
-                if (tile != Tile.STAIRS_DOWN) {
+                if (tile == Tile.STAIRS_DOWN) {
                     this.doAction("walk up the stairs to level %d", this.z + mz + 1);
                 }else{
                     this.doAction("try to go up but are stopped by the cave ceiling");
@@ -195,7 +199,7 @@ class Actor {
                 }
 
             } else if (mz == 1) {
-                if (tile != Tile.STAIRS_UP) {
+                if (tile == Tile.STAIRS_UP) {
                     this.doAction("walk down the stairs to level %d", this.z + mz + 1);
                 }else{
                     this.doAction("try to go down but are stopped by the cave floor");
@@ -224,6 +228,18 @@ class Actor {
             this.modXp(amount);
         }
 
+    }
+    public void eat(Item item){
+        doAction("eat a " + nameOf(item));
+        consume(item);
+    }
+
+    private void consume(Item item){
+        if (item.getFatigue() < 0)
+            notify("Gross!");
+
+        modifyFatigue(item.getFatigue());
+        getRidOf(item);
     }
 
     public void notify(String message, Object ... args){
@@ -312,22 +328,23 @@ class Actor {
         return sb.toString().trim();
     }
 
-    public void unequip(Item item) {if (item == this.weapon) {
-        if(item != null){
-            if(item == this.getWeapon()){
-                if(this.hp > 0){
-                    this.doAction("Dropped " + this.nameOf(item));
+    public void unequip(Item item) {
+        if (item == this.weapon) {
+            if(item != null){
+                if(item == this.getWeapon()){
+                    if(this.hp > 0){
+                        this.doAction("Dropped " + item.getName());
+                    }
                 }
+                this.weapon = null;
             }
-            this.weapon = null;
         }
-    }
     }
 
     public void equip(Item item) {
         if (!this.inventory.contains(item)) {
             if (this.inventory.isFull()) {
-                this.notify("Can't equip %s since you're holding too much stuff.", this.nameOf(item));
+                this.notify("Can't equip %s since you're holding too much stuff.", item.getName());
                 return;
             }
 
@@ -363,9 +380,9 @@ class Actor {
         Item item = world.item(x, y, z);
 
         if (inventory.isFull() || item == null){
-            doAction("grab at the ground");
+            doAction("Picked up nothing!");
         } else {
-            doAction("pickup a %s", nameOf(item));
+            doAction("pickup %s", item.getName());
             world.removeItemAt(x, y, z);
             inventory.add(item);
         }
@@ -373,7 +390,7 @@ class Actor {
 
     public void drop(Item item) {
         if (this.world.addAtEmptySpace(item, this.x, this.y, this.z)) {
-            this.doAction("drop a " + this.nameOf(item));
+            this.doAction("dropped " + item.getName());
             this.inventory.remove(item);
             this.unequip(item);
         } else {

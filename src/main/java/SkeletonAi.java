@@ -1,6 +1,6 @@
-public class EnemyAi extends ActorAi {
+public class SkeletonAi extends ActorAi {
     private GameFactory gameFactory;
-    public EnemyAi(Actor actor) {
+    public SkeletonAi(Actor actor) {
         super(actor);
         this.gameFactory = gameFactory;
     }
@@ -10,8 +10,6 @@ public class EnemyAi extends ActorAi {
         int y = actor.y + (int)(Math.random()*11)-5;
         int z = actor.z + (int)(Math.random()*11)-5;
 
-        if(!actor.canEnter(x,y,z)){
-            return;
-        }
+
     }
 }

@@ -28,7 +28,7 @@ public class ActorAi {
             this.actor.y = y;
             this.actor.z = z;
         }else{
-            this.actor.doAction("bumped!", new Object[0]);
+            this.actor.doAction("bumped!");
         }
     }
     public void onUpdate(){
@@ -58,7 +58,7 @@ public class ActorAi {
         int mx = (int)(Math.random() * 3.0) - 1;
         int my = (int)(Math.random() * 3.0) - 1;
         Actor other = this.actor.actor(this.actor.x + mx, this.actor.y + my, this.actor.z);
-        if ((other == null || !other.getName().equals(this.actor.getName())) && this.actor.tile(this.actor.x + mx, this.actor.y + my, this.actor.z).isGround()) {
+        if ((other != null && other.getName().equals(this.actor.getName())) || !this.actor.tile(this.actor.x + mx, this.actor.y + my, this.actor.z).isGround()) {
             this.actor.moveBy(mx, my, 0);
         }
     }

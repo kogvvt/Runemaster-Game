@@ -9,6 +9,10 @@ public class Item {
     public int getFatigue() { return fatigue; }
     public void modifyFatigue(int amount) { fatigue += amount; }
 
+    public void setFatigue(int fatigue) {
+        this.fatigue = fatigue;
+    }
+
     public Item(char character, String name, String description) {
         this.character = character;
         this.name = name;
@@ -58,6 +62,7 @@ public class Item {
     }
     public void modifyAttackValue(int amount) { attackValue += amount; }
     public void modifyDefenseValue(int amount) { defenseValue += amount; }
+
     public String getItemStats() {
         String itemStats = "";
         if(this.attackValue != 0){
