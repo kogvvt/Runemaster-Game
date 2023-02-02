@@ -9,8 +9,8 @@ public class GameOver implements Screen {
     }
     @Override
     public void displayOutput(AsciiPanel asciiPanel) {
-        asciiPanel.write("Game over!", 1 ,1);
-        asciiPanel.write("Press [enter] to restart",2,2);
+        asciiPanel.writeCenter("Game over!", 10 );
+        asciiPanel.writeCenter("Press [enter] to restart",22);
     }
 
     @Override

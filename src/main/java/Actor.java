@@ -11,18 +11,18 @@ class Actor {
     private Inventory inventory;
     private int fatigue;
     private int maxFatigue;
-    private Item weapon;
     private int level;
     private ActorAi actorAi;
     private int hp;
+
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
+
     private int maxHp;
-    private int regenHpCooldown;
-    private int regenHpPer1000;
-    public void modifyRegenHpPer1000(int amount) { regenHpPer1000 += amount; }
     private int attack;
     private int defense;
     private int vision;
-    public void modifyVision(int value) { vision += value; }
     private int xp;
     private int detect;
     private String deathCause;
@@ -37,10 +37,9 @@ class Actor {
         this.defense = defense;
         this.name = name;
         this.inventory = new Inventory(30);
-        this.maxFatigue = 1000;
+        this.maxFatigue = 1500;
         this.fatigue = maxFatigue;
         this.vision = 9;
-        this.regenHpPer1000 = 10;
         this.level = 1;
     }
 
@@ -67,21 +66,11 @@ class Actor {
         if (hp > maxHp) {
             hp = maxHp;
         } else if (hp < 1) {
-            doAction("die");
-            leaveCorpse();
+            doAction("died!");
             world.removeActor(this);
         }
     }
 
-    private void leaveCorpse(){
-        Item corpse = new Item('%', name + " corpse", null);
-        corpse.modifyFatigue(maxHp * 5);
-        world.addAtEmptySpace(corpse, x, y, z);
-        for (Item item : inventory.getItems()){
-            if (item != null)
-                drop(item);
-        }
-    }
     public void dig(int wx, int wy, int wz) {
         modifyFatigue(-10);
         world.dig(wx, wy, wz);
@@ -89,31 +78,13 @@ class Actor {
     }
     public void modifyFatigue(int amount) {
         fatigue += amount;
-
-        if (fatigue > maxFatigue) {
-            maxFatigue = (maxFatigue + fatigue) / 2;
-            fatigue = maxFatigue;
-            notify("You can't eat that much!");
-            modifyHp(-1, "Overeating is not good for you!");
-        } else if (fatigue < 1 && isPlayer()) {
-            modifyHp(-1000, "You died due to starvation!");
+        if (fatigue < 1 && isPlayer()) {
+            modifyHp(-1, "You died due to starvation!");
         }
     }
     public void update(){
         modifyFatigue(-1);
-        regenerateHealth();
         actorAi.onUpdate();
-    }
-
-    private void regenerateHealth(){
-        regenHpCooldown -= regenHpPer1000;
-        if (regenHpCooldown < 0){
-            if (hp < maxHp){
-                modifyHp(1, "Died from regenerating health?");
-                modifyFatigue(-1);
-            }
-            regenHpCooldown += 1000;
-        }
     }
 
     public void modifyMaxHp(int amount) { maxHp += amount; }
@@ -145,9 +116,10 @@ class Actor {
         return this.inventory;
     }
 
-    public int getMaxFatigue() {
-        return this.maxFatigue;
+    public void setMaxFatigue(int maxFatigue) {
+        this.maxFatigue = maxFatigue;
     }
+
     public int getFatigue() {
         return this.fatigue;
     }
@@ -156,29 +128,23 @@ class Actor {
         this.fatigue = fatigue;
     }
 
-    public Item getWeapon(){
-        return this.weapon;
-    }
+
     public int getXp(){
         return this.xp;
     }
 
     public String getStats() {
-        return String.format("  level:%d  attack:%d  defense:%d  hp:%d", this.level, this.getAttack(), this.getDefense(), this.getHp());
+        return String.format("Level: %d  HP: %d, Fatigue: %d Attack: %d, Defense: %d  XP: %d", this.getLevel(), this.getHp(), this.getFatigue(), this.getAttack(), this.getDefense(),this.getXp());
     }
 
     public int getLevel() {
         return this.level;
     }
 
-    public String getDeathCause() {
-        return this.deathCause;
-    }
-
     public void modXp(int amount){
         this.xp += amount;
         this.notify("You %s %d xp", amount < 0 ? "lost" : "gained", amount);
-        while(this.xp > (int)(Math.pow((double)this.level, 1.75 ) * 25.0)){
+        while(this.xp > (int)(Math.pow(this.level, 1.75 ) * 25.0)){
             ++this.level;
             this.doAction("Advanced to %d level!!!", this.level);
             this.actorAi.onGainLevel();
@@ -229,19 +195,6 @@ class Actor {
         }
 
     }
-    public void eat(Item item){
-        doAction("eat a " + nameOf(item));
-        consume(item);
-    }
-
-    private void consume(Item item){
-        if (item.getFatigue() < 0)
-            notify("Gross!");
-
-        modifyFatigue(item.getFatigue());
-        getRidOf(item);
-    }
-
     public void notify(String message, Object ... args){
         actorAi.onNotify(String.format(message, args));
     }
@@ -254,9 +207,7 @@ class Actor {
        amount = (int)(Math.random() * amount) + 1;
 
        Object[] args2 = new Object[args.length+1];
-       for (int i = 0; i < args.length; i++){
-           args2[i] = args[i];
-       }
+       System.arraycopy(args, 0, args2, 0, args.length);
        args2[args2.length - 1] = amount;
 
        doAction(action, args2);
@@ -267,7 +218,7 @@ class Actor {
            gainXp(actor);
     }
     private List<Actor> getActorsWhoSeeMe(){
-        List<Actor> others = new ArrayList<Actor>();
+        List<Actor> others = new ArrayList<>();
         int r = 9;
         for (int ox = -r; ox < r+1; ox++){
             for (int oy = -r; oy < r+1; oy++){
@@ -293,22 +244,6 @@ class Actor {
             }
         }
     }
-
-    public void doAction(Item item, String message, Object ... params){
-        if (hp < 1)
-            return;
-
-        for (Actor other : getActorsWhoSeeMe()){
-            if (other == this){
-                other.notify("You " + message + ".", params);
-            } else {
-                other.notify(String.format("The %s %s.", name, makeSecondActor(message)), params);
-            }
-            other.learnName(item);
-        }
-    }
-
-
     public boolean canEnter(int wx, int wy, int wz){
         return world.tile(wx,wy,wz).isGround() && world.actor(wx,wy,wz) == null;
     }
@@ -328,54 +263,10 @@ class Actor {
         return sb.toString().trim();
     }
 
-    public void unequip(Item item) {
-        if (item == this.weapon) {
-            if(item != null){
-                if(item == this.getWeapon()){
-                    if(this.hp > 0){
-                        this.doAction("Dropped " + item.getName());
-                    }
-                }
-                this.weapon = null;
-            }
-        }
-    }
-
-    public void equip(Item item) {
-        if (!this.inventory.contains(item)) {
-            if (this.inventory.isFull()) {
-                this.notify("Can't equip %s since you're holding too much stuff.", item.getName());
-                return;
-            }
-
-            this.world.remove(item);
-            this.inventory.add(item);
-        }
-
-        if (item.getAttackValue() != 0 || item.getDefenseValue() != 0) {
-            if (item.getAttackValue() >= item.getDefenseValue()) {
-                this.unequip(this.weapon);
-                this.doAction("wield a " + this.nameOf(item));
-                this.weapon = item;
-            }
-
-        }
-    }
-
     public Item item(int wx, int wy, int wz) {
         return this.canSee(wx, wy, wz) ? this.world.item(wx, wy, wz) : null;
     }
 
-    private void getRidOf(Item item) {
-        this.inventory.remove(item);
-        this.unequip(item);
-    }
-
-    private void putAt(Item item, int wx, int wy, int wz) {
-        this.inventory.remove(item);
-        this.unequip(item);
-        this.world.addAtEmptySpace(item, wx, wy, wz);
-    }
     public void pickup(){
         Item item = world.item(x, y, z);
 
@@ -385,19 +276,18 @@ class Actor {
             doAction("pickup %s", item.getName());
             world.removeItemAt(x, y, z);
             inventory.add(item);
+            checkPickedUpItem(item);
+        }
+    }
+    private void checkPickedUpItem(Item item){
+        switch (item.getName().toLowerCase()) {
+            case "defense hugr", "big defense hugr", "huge defense hugr" -> modifyDefense(item.getDefenseValue());
+            case "attack hugr", "big attack hugr", "huge attack hugr" -> modifyAttack(item.getAttackValue());
+            case "fatigue hugr", "big fatigue hugr", "huge fatigue hugr" -> modifyFatigue(item.getFatigue());
+            case "health hugr", "big health hugr", "huge health hugr" -> modifyHp(item.getHpValue(), "I feel alive!");
         }
     }
 
-    public void drop(Item item) {
-        if (this.world.addAtEmptySpace(item, this.x, this.y, this.z)) {
-            this.doAction("dropped " + item.getName());
-            this.inventory.remove(item);
-            this.unequip(item);
-        } else {
-            this.notify("There's nowhere to drop the %s.", this.nameOf(item));
-        }
-
-    }
     public boolean canSee(int wx, int wy, int wz) {
         return this.detect > 0 && this.world.actor(wx, wy, wz) != null || this.actorAi.canSee(wx, wy, wz);
     }
@@ -412,11 +302,4 @@ class Actor {
     public Tile tile(int wx, int wy, int wz) {
         return this.canSee(wx, wy, wz) ? this.world.tile(wx, wy, wz) : this.actorAi.rememberedTile(wx, wy, wz);
     }
-
-    public void learnName(Item item){
-        notify("The " + item.getDescription() + " is a " + item.getName() + "!");
-        actorAi.setName(item, item.getName());
-    }
-
-
 }

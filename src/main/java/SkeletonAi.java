@@ -1,15 +1,18 @@
 public class SkeletonAi extends ActorAi {
-    private GameFactory gameFactory;
-    public SkeletonAi(Actor actor) {
+    private Actor player;
+    public SkeletonAi(Actor actor, Actor player) {
         super(actor);
-        this.gameFactory = gameFactory;
+        this.player = player;
     }
 
-    public void onUpdate(Actor actor, GameFactory gameFactory) {
-        int x = actor.x + (int)(Math.random()*11)-5;
-        int y = actor.y + (int)(Math.random()*11)-5;
-        int z = actor.z + (int)(Math.random()*11)-5;
-
-
+    public void onUpdate() {
+        if (Math.random() < 0.2) {
+            return;
+        }
+        if (actor.canSee(this.player.x, this.player.y, this.player.z)) {
+            hunt(this.player);
+        } else {
+            wander();
+        }
     }
 }

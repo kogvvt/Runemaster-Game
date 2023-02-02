@@ -1,6 +1,6 @@
-public class DraugrAi extends ActorAi {
+public class GiantAi extends ActorAi{
     private Actor player;
-    public DraugrAi(Actor actor, Actor player) {
+    public GiantAi(Actor actor, Actor player) {
         super(actor);
         this.player = player;
     }

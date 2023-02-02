@@ -1,9 +1,12 @@
 public class Inventory {
     private Item[] items;
+    int maxInvSlots;
+
 
     public Item[] getItems() {
         return items;
     }
+
     public Item getItem(int index) {
         return this.items[index];
     }
@@ -32,16 +35,12 @@ public class Inventory {
 
     public boolean isFull() {
         int invSize = 0;
-        for(int i = 0 ; i < this.items.length; i++){
-            if(this.items[i] != null){
+        for (Item item : this.items) {
+            if (item != null) {
                 ++invSize;
             }
         }
-        if(invSize == this.items.length){
-            return true;
-        }else{
-            return false;
-        }
+        return invSize == this.items.length;
     }
 
     public boolean contains(Item item) {

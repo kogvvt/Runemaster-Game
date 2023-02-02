@@ -5,8 +5,8 @@ import java.awt.event.KeyEvent;
 public class WinScreen implements Screen {
     @Override
     public void displayOutput(AsciiPanel asciiPanel) {
-        asciiPanel.write("You won!", 1 ,1);
-        asciiPanel.write("Press [enter] to restart",2,2);
+        asciiPanel.writeCenter("You found the sacred rune - Fehu! Congratulations!", 10);
+        asciiPanel.writeCenter("Press [enter] to restart",22);
     }
 
     @Override

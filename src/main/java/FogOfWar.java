@@ -1,5 +1,3 @@
-import java.util.Iterator;
-
 public class FogOfWar {
     private World world;
     private int depth;
@@ -36,10 +34,8 @@ public class FogOfWar {
         for(int x = -r; x < r; ++x) {
             for(int y = -r; y < r; ++y) {
                 if (x * x + y * y <= r * r && wx + x >= 0 && wx + x < this.world.getWidth() && wy + y >= 0 && wy + y < this.world.getHeight()) {
-                    Iterator var = (new Line(wx, wy, wx + x, wy + y)).iterator();
 
-                    while(var.hasNext()) {
-                        Point p = (Point)var.next();
+                    for (Point p : new Line(wx, wy, wx + x, wy + y)) {
                         Tile tile = this.world.tile(p.x, p.y, wz);
                         this.visible[p.x][p.y] = true;
                         this.tiles[p.x][p.y][wz] = tile;

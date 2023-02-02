@@ -10,11 +10,12 @@
 I chose it simply because it can run with little to no problems on all systems as long as you have a JVM to run it. Also things like Garbage Collector will help a lot in maintaining stability and prevent memory leaks. Even though Java is considered a mediocre language to program games in, it can still provide decent quality and performance (also personally Java is a language that I want to get better with).
 
 ## Game description
-The idea of this game is to show the road of a player that is a novice at working with runes to complete rune mastery. He will be put into many dangerous situations so he could learn how to use them flawlessly. Runes will have different meanings and uses, which will become useful later on in the game. Some runes would heal, some would kill. Some would bribe, some would make somebody angry. The only limit is within the player (and the technical capabilities).
+The idea of this game is to show the road of a player that has no idea in working with runes to complete rune mastery. He will be put into many dangerous situations and be attacked by various enemies so that he could learn how to become stronger and find his first rune, "Fehu".
+It will be his first step on the long journey that awaits him.
 
 ## Some mechanics
-Runes are associated with magic and illusion, so focusing on those aspects is key.
-By implementing different runes that will help the player (runes are small, so the player can collect them all) I could have freedom regarding mechanics, magic, interactions and (maybe) possible synergies. As it is a roguelike, it would have permadeath, no save states (maybe some savefiles but in a progress type of way, we shall see), turn-based gameplay, pokemon-style battles, exploration, and a procedurally generated map based on a grid with some puzzle elements.
+Hugr (Old Norse: "thought","mind") is basically fragments of the fallen wannabe 
+Runemasters, that left some of their soul power to help others that want to pursue the way of the Runemaster. But our hero should be cautious because the road will be steep and we need to look out for our fatigue to not get depleted.  
 
 ## Visuals
-I would love to try to make it in nordic, pixel-art style, but I don't know if it will be possible in so little time so that's a subject to change.
+I've come to the conclusion that due to limited time I would go for a classic ASCII character game with implemented things like field of wiev(fog of war) so it may not look good but it does it job.

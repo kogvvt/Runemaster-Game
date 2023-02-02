@@ -27,26 +27,38 @@ public class PlayScreen implements Screen {
         player = factory.newPlayer(messages);
 
         for (int z = 0; z < world.getDepth(); z++){
-            for (int i = 0; i < z * 2 + 1; i++){
-                factory.newSkeleton();
+            for (int i = 0; i < 5; i++){
+                factory.newSkeleton(i,player);
             }
+            for(int i = 0 ; i<z*2+1; i++){
+                factory.newDraugr(z,player);
+            }
+            for(int i = 3; i <5; i++){
+                factory.newTroll(i,player);
+            }
+
         }
+        factory.newGiant(world.getDepth()-1,player);
     }
+    private void createItems(GameFactory factory) {
+        for (int z = 0; z < world.getDepth(); z++){
+            factory.randomHealthHugr(z);
+            factory.randomHealthHugr(z);
+            factory.randomHealthHugr(z);
+            factory.randomFatigueHugr(z);
+            factory.randomFatigueHugr(z);
+            factory.randomAttackHugr(z);
+            factory.randomAttackHugr(z);
+            factory.randomDefenseHugr(z);
+            factory.randomDefenseHugr(z);
+
+        }
+        factory.newWinningItem(world.getDepth() - 1);
+    }
+
 
     private void generateWorld(){
         this.world = (new WorldBuilder(90,32,5)).buildCaves().build();
-    }
-    private String hunger(){
-        if (player.getFatigue() < player.getMaxFatigue() * 0.10)
-            return "Starving";
-        else if (player.getFatigue() < player.getMaxFatigue() * 0.25)
-            return "Hungry";
-        else if (player.getFatigue() > player.getMaxFatigue() * 0.90)
-            return "Stuffed";
-        else if (player.getFatigue() > player.getMaxFatigue() * 0.75)
-            return "Full";
-        else
-            return "";
     }
 
     private void displayMessages(AsciiPanel terminal, List<String> messages) {
@@ -80,7 +92,7 @@ public class PlayScreen implements Screen {
         int top = getScrollingY();
         displayTiles(asciiPanel, left, top);
         asciiPanel.write(player.getCharacter(),player.x-left, player.y-top);
-        String stats = String.format("%3d/%3d hp %8s", player.getHp(), player.getMaxHp(), player.getFatigue());
+        String stats = player.getStats();
         asciiPanel.write(stats,1,23);
         displayMessages(asciiPanel,messages);
     }
@@ -123,14 +135,14 @@ public class PlayScreen implements Screen {
                 case KeyEvent.VK_X:
                     player.moveBy(1, 1, 0);
                     break;
-                case KeyEvent.VK_I:
-                    new Equip(player);
-                    break;
             }
                 switch (key.getKeyChar()) {
                     case 'g':
                     case ',':
                         player.pickup();
+                        if(checkIfHasWinningItem(player)){
+                            return new WinScreen();
+                        }
                         break;
                     case '<':
                         if (userIsTryingToExit())
@@ -142,6 +154,7 @@ public class PlayScreen implements Screen {
                         player.moveBy(0, 0, 1);
                         break;
                     case'`':
+                        player.setMaxFatigue(10000);
                         player.setFatigue(10000);
                 }
             }
@@ -171,6 +184,18 @@ public class PlayScreen implements Screen {
         return Math.max(0,Math.min(player.y - screenHeight/2, world.getHeight() - screenHeight));
     }
 
+    private boolean checkIfHasWinningItem(Actor player){
+        for(Item item : player.getInventory().getItems()){
+            if(item == null){
+                continue;
+            }
+            if(item.getName().equalsIgnoreCase("Fehu Rune")){
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Screen userExits(){
         for (Item item : player.getInventory().getItems()){
             if (item != null && item.getName().equalsIgnoreCase("Fehu Rune"))
@@ -178,19 +203,6 @@ public class PlayScreen implements Screen {
         }
         player.modifyHp(0, "Died while cowardly fleeing the caves.");
         return new GameOver(player);
-    }
-
-    private void createItems(GameFactory factory) {
-        for (int z = 0; z < world.getDepth(); z++){
-
-            factory.newFruit(z);
-            factory.newBread(z);
-            factory.randomWeapon(z);
-            factory.randomWeapon(z);
-
-
-        }
-        factory.newWinningItem(world.getDepth() - 1);
     }
 
 }
