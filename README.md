@@ -19,4 +19,4 @@ Hugr (Old Norse: "thought","mind") is basically fragments of the fallen wannabe
 Runemasters, that left some of their soul power to help others that want to pursue the way of the Runemaster. But our hero should be cautious because the road will be steep and we need to look out for our fatigue to not get depleted.  
 
 ## Visuals
-I've come to the conclusion that due to limited time I would go for a classic ASCII character game with implemented things like field of wiev(fog of war) so it may not look good but it does it job.
+I went for a classic ASCII character game with implemented things like field of wiev(fog of war)
