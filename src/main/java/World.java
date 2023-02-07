@@ -57,7 +57,7 @@ public class World {
             x = (int)(Math.random() * (double) this.width);
             y = (int)(Math.random() * (double) this.height);
 
-        }while(!tile(x,y,z).isGround() || this.actor(x,y,z) != null);
+        }while(tile(x,y,z).isGround() || this.actor(x,y,z) != null);
         actor.x = y;
         actor.y = y;
         actor.z = z;

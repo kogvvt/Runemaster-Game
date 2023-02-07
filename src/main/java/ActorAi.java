@@ -77,6 +77,9 @@ public class ActorAi {
         int mx = points.get(0).x - this.actor.x;
         int my = points.get(0).y - this.actor.y;
         this.actor.moveBy(mx, my, 0);
+        if(rememberedTile(this.actor.x, this.actor.y, this.actor.z).isDiggable()){
+            actor.dig(mx,my, this.actor.z);
+        }
     }
 
 }

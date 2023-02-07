@@ -43,6 +43,30 @@ class Actor {
         this.level = 1;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public void setZ(int z) {
+        this.z = z;
+    }
+
     public char getCharacter() {
         return this.character;
     }
@@ -79,7 +103,7 @@ class Actor {
     public void modifyFatigue(int amount) {
         fatigue += amount;
         if (fatigue < 1 && isPlayer()) {
-            modifyHp(-1, "You died due to starvation!");
+            modifyHp(-1000, "You died due to starvation!");
         }
     }
     public void update(){
