@@ -6,7 +6,6 @@
 
 ### Technology used : Java
 
-## Due to anti-plagiarism system at my university the code was added to my github portfolio after making and grading it. 
 
 ## Why did I chose Java?
 I chose it simply because it can run with little to no problems on all systems as long as you have a JVM to run it. Also things like Garbage Collector will help a lot in maintaining stability and prevent memory leaks. Even though Java is considered a mediocre language to program games in, it can still provide decent quality and performance (also personally Java is a language that I want to get better with).
